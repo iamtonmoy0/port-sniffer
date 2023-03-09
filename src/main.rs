@@ -1,6 +1,9 @@
 use std::env;
 use std::net::IpAddr;
 use std::str::FromStr;
+use std::process;
+use std::sync::mpsc::{Sender,channel};
+use std::thread;
 
 struct  Arguments{
     flag: String,
@@ -36,7 +39,9 @@ impl Arguments{
                     Ok(s)=>s,
                     Err(_)=>return Err("failed to parse thread number")
                 };
-return Ok(Arguments { flag, ipaddr, threads})
+return Ok(Arguments { flag, ipaddr, threads});
+            }else {
+                return Err("invalid syntax");
             }
         }
     }
@@ -45,4 +50,18 @@ return Ok(Arguments { flag, ipaddr, threads})
 fn main() {
     let args: Vec<String>=env::args().collect();
     let program = args[0].clone();
+    let arguments= Arguments::new(&args).unwrap_or_else(
+        |err|{
+            if err.contains("help"){
+             process::exit(0);
+            }else{
+                eprintln!("{} problem parsing arguments:{}",program,err);
+                process::exit(0)
+
+            }
+        }
+    );
+    let num_threads= arguments.threads;
+    let (tx.rx)= channel();
+    
 }
