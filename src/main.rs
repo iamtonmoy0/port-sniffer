@@ -1,5 +1,5 @@
-use std::{env, num};
-use std::io::{self,Write}
+use std::env;
+use std::io::{self,Write};
 use std::net::{IpAddr, TcpStream};
 use std::str::FromStr;
 use std::process;
@@ -7,13 +7,13 @@ use std::sync::mpsc::{Sender,channel};
 use std::thread;
 
 const MAX: u16=65535;
-struct  Arguments{
+struct  Arguments {
     flag: String,
     ipaddr:IpAddr,
     threads:u16, 
 }
 impl Arguments{
-    fn new(args:&[String])-> Result<Arguments,&static str>{
+    fn new(args:&[String])-> Result<Arguments,&'static str>{
         if args.len()<2{
             return Err("not enough arguments");
         }else if args.len()>4 {
@@ -21,8 +21,8 @@ impl Arguments{
             
         }
         let f = args[1].clone();
-        if let Ok(IpAddr)=IpAddr::from_str(&f){
-            return Ok(Arguments { flag: String::from(""), ipaddr, threads: 4 });
+        if let Ok(ipaddr)=IpAddr::from_str(&f){
+            return Ok(Arguments { flag: String::from(""), ipaddr, threads: 4, });
 
         }else{
             let flag = args[1].clone();
@@ -33,7 +33,7 @@ impl Arguments{
                 return Err("too many arguments");
                 
             }else if flag.contains("-j") {
-                let ipaddr=match IpAddr::from(&args[3]){
+                let ipaddr=match IpAddr::from_str(&args[3]){
                     Ok(s)=>s,
                     Err(_)=>return Err("not a valid IpAddr;must be IPv4 or IPv6")
                 };
@@ -49,8 +49,8 @@ return Ok(Arguments { flag, ipaddr, threads});
     }
 }
 
-fn scan(tx::Sender<u16>,start_port:u16,addr:IpAddr,num_threads:u16){
-    let mut port:u16= start_port +1;let mut port:u16=start_port
+fn scan(tx:Sender<u16>,start_port:u16,addr:IpAddr,num_threads:u16){
+    let mut port: u16 = start_port +1;
     loop{
         match  TcpStream::connect((addr,port)) {
             Ok(_)=>{
@@ -81,12 +81,23 @@ fn main() {
         }
     );
     let num_threads= arguments.threads;
+    let addr = arguments.ipaddr;
     let (tx,rx)= channel();
-    for i in 0 num_threads{
+    for i in 0.. num_threads{
         let tx =tx.clone();
         thread::spawn(move||{
-            sc an(tx,i,arguments.ipaddr,num_threads);
+            scan(tx,i,arguments.ipaddr,num_threads);
         });
+    }
+    let mut out = vec![];
+    drop(tx);
+    for p in rx{
+    out.push(p)
+    }
+    println!("");
+    out.sort();
+    for v in out{
+        println!("{} is open",v);
     }
 
 }
